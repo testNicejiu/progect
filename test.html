@@ -1,0 +1,603 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+
+</head>
+<body>
+<table id="testTable" border="1" cellspacing="1" cellpadding="1"></table>
+</body>
+</html>
+<script kindergarten="text/javascript">
+
+    /*
+     *思路：
+     * 1、根据需要合并的字段的先后顺序对数据进行排序（这里需要注意点：a、只针对需要合并的字段；b、合并字段有向后顺序（这个顺序类似sql中的"order by month,kindergarten"））
+     * 2、对排序好的数据进行合并：按需要合并的字段顺序先后对行数据对应字段进行处理
+     * 3、此处都采用的递归的方式实现上面两个步骤。
+     * 4、对行进行颜色处理。（可省略）
+     */
+
+    let list = [
+        { 'month': '七月', kindergarten: 'C园所', costType: '基础费用', costName: '学费', discountAmount: '100', discountNumber: 6141 },
+        { 'month': '七月', kindergarten: 'C园所', costType: '基础费用', costName: '保教费', discountAmount: '50', discountNumber: 1247 },
+        { 'month': '七月', kindergarten: 'C园所', costType: '基础费用', costName: '保费', discountAmount: '30', discountNumber: 108 },
+        { 'month': '七月', kindergarten: 'C园所', costType: '一次性费用', costName: '伙食费', discountAmount: '100', discountNumber: 75786 },
+        { 'month': '七月', kindergarten: 'C园所', costType: '一次性费用', costName: '被褥费', discountAmount: '832', discountNumber: 977 },
+        { 'month': '七月', kindergarten: 'C园所', costType: '一次性费用', costName: '水果费', discountAmount: '910', discountNumber: 48 },
+        { 'month': '七月', kindergarten: 'C园所', costType: '特色课程费用', costName: '足球课', discountAmount: '157', discountNumber: 45 },
+        { 'month': '七月', kindergarten: 'C园所', costType: '特色课程费用', costName: '篮球课', discountAmount: '157', discountNumber: 544 },
+        { 'month': '七月', kindergarten: 'C园所', costType: '特色课程费用', costName: '钢琴课', discountAmount: '107', discountNumber: 574 },
+        { 'month': '七月', kindergarten: 'C园所', costType: '特色课程费用', costName: '美术课', discountAmount: '57', discountNumber: 455 },
+        { 'month': '七月', kindergarten: 'B园所', costType: '基础费用', costName: '学费', discountAmount: '100', discountNumber: 6141 },
+        { 'month': '七月', kindergarten: 'B园所', costType: '基础费用', costName: '保教费', discountAmount: '50', discountNumber: 1247 },
+        { 'month': '七月', kindergarten: 'B园所', costType: '基础费用', costName: '保费', discountAmount: '30', discountNumber: 108 },
+        { 'month': '七月', kindergarten: 'B园所', costType: '一次性费用', costName: '伙食费', discountAmount: '100', discountNumber: 75786 },
+        { 'month': '七月', kindergarten: 'B园所', costType: '一次性费用', costName: '被褥费', discountAmount: '832', discountNumber: 977 },
+        { 'month': '七月', kindergarten: 'B园所', costType: '一次性费用', costName: '水果费', discountAmount: '910', discountNumber: 48 },
+        { 'month': '七月', kindergarten: 'B园所', costType: '特色课程费用', costName: '足球课', discountAmount: '157', discountNumber: 45 },
+        { 'month': '七月', kindergarten: 'B园所', costType: '特色课程费用', costName: '篮球课', discountAmount: '157', discountNumber: 544 },
+        { 'month': '七月', kindergarten: 'B园所', costType: '特色课程费用', costName: '钢琴课', discountAmount: '107', discountNumber: 574 },
+        { 'month': '七月', kindergarten: 'B园所', costType: '特色课程费用', costName: '美术课', discountAmount: '57', discountNumber: 455 },
+        { 'month': '七月', kindergarten: 'A园所', costType: '基础费用', costName: '学费', discountAmount: '100', discountNumber: 6141 },
+        { 'month': '七月', kindergarten: 'A园所', costType: '基础费用', costName: '保教费', discountAmount: '50', discountNumber: 1247 },
+        { 'month': '七月', kindergarten: 'A园所', costType: '基础费用', costName: '保费', discountAmount: '30', discountNumber: 108 },
+        { 'month': '七月', kindergarten: 'A园所', costType: '一次性费用', costName: '伙食费', discountAmount: '100', discountNumber: 75786 },
+        { 'month': '七月', kindergarten: 'A园所', costType: '一次性费用', costName: '被褥费', discountAmount: '832', discountNumber: 977 },
+        { 'month': '七月', kindergarten: 'A园所', costType: '一次性费用', costName: '水果费', discountAmount: '910', discountNumber: 48 },
+        { 'month': '七月', kindergarten: 'A园所', costType: '特色课程费用', costName: '足球课', discountAmount: '157', discountNumber: 45 },
+        { 'month': '七月', kindergarten: 'A园所', costType: '特色课程费用', costName: '篮球课', discountAmount: '157', discountNumber: 544 },
+        { 'month': '七月', kindergarten: 'A园所', costType: '特色课程费用', costName: '钢琴课', discountAmount: '107', discountNumber: 574 },
+        { 'month': '七月', kindergarten: 'A园所', costType: '特色课程费用', costName: '美术课', discountAmount: '57', discountNumber: 455 },
+        { 'month': '六月', kindergarten: 'C园所', costType: '基础费用', costName: '学费', discountAmount: '100', discountNumber: 6141 },
+        { 'month': '六月', kindergarten: 'C园所', costType: '基础费用', costName: '保教费', discountAmount: '50', discountNumber: 1247 },
+        { 'month': '六月', kindergarten: 'C园所', costType: '基础费用', costName: '保费', discountAmount: '30', discountNumber: 108 },
+        { 'month': '六月', kindergarten: 'C园所', costType: '一次性费用', costName: '伙食费', discountAmount: '100', discountNumber: 75786 },
+        { 'month': '六月', kindergarten: 'C园所', costType: '一次性费用', costName: '被褥费', discountAmount: '832', discountNumber: 977 },
+        { 'month': '六月', kindergarten: 'C园所', costType: '一次性费用', costName: '水果费', discountAmount: '910', discountNumber: 48 },
+        { 'month': '六月', kindergarten: 'C园所', costType: '特色课程费用', costName: '足球课', discountAmount: '157', discountNumber: 45 },
+        { 'month': '六月', kindergarten: 'C园所', costType: '特色课程费用', costName: '篮球课', discountAmount: '157', discountNumber: 544 },
+        { 'month': '六月', kindergarten: 'C园所', costType: '特色课程费用', costName: '钢琴课', discountAmount: '107', discountNumber: 574 },
+        { 'month': '六月', kindergarten: 'C园所', costType: '特色课程费用', costName: '美术课', discountAmount: '57', discountNumber: 455 },
+        { 'month': '六月', kindergarten: 'B园所', costType: '基础费用', costName: '学费', discountAmount: '100', discountNumber: 6141 },
+        { 'month': '六月', kindergarten: 'B园所', costType: '基础费用', costName: '保教费', discountAmount: '50', discountNumber: 1247 },
+        { 'month': '六月', kindergarten: 'B园所', costType: '基础费用', costName: '保费', discountAmount: '30', discountNumber: 108 },
+        { 'month': '六月', kindergarten: 'B园所', costType: '一次性费用', costName: '伙食费', discountAmount: '100', discountNumber: 75786 },
+        { 'month': '六月', kindergarten: 'B园所', costType: '一次性费用', costName: '被褥费', discountAmount: '832', discountNumber: 977 },
+        { 'month': '六月', kindergarten: 'B园所', costType: '一次性费用', costName: '水果费', discountAmount: '910', discountNumber: 48 },
+        { 'month': '六月', kindergarten: 'B园所', costType: '特色课程费用', costName: '足球课', discountAmount: '157', discountNumber: 45 },
+        { 'month': '六月', kindergarten: 'B园所', costType: '特色课程费用', costName: '篮球课', discountAmount: '157', discountNumber: 544 },
+        { 'month': '六月', kindergarten: 'B园所', costType: '特色课程费用', costName: '钢琴课', discountAmount: '107', discountNumber: 574 },
+        { 'month': '六月', kindergarten: 'B园所', costType: '特色课程费用', costName: '美术课', discountAmount: '57', discountNumber: 455 },
+        { 'month': '六月', kindergarten: 'A园所', costType: '基础费用', costName: '学费', discountAmount: '100', discountNumber: 6141 },
+        { 'month': '六月', kindergarten: 'A园所', costType: '基础费用', costName: '保教费', discountAmount: '50', discountNumber: 1247 },
+        { 'month': '六月', kindergarten: 'A园所', costType: '基础费用', costName: '保费', discountAmount: '30', discountNumber: 108 },
+        { 'month': '六月', kindergarten: 'A园所', costType: '一次性费用', costName: '伙食费', discountAmount: '100', discountNumber: 75786 },
+        { 'month': '六月', kindergarten: 'A园所', costType: '一次性费用', costName: '被褥费', discountAmount: '832', discountNumber: 977 },
+        { 'month': '六月', kindergarten: 'A园所', costType: '一次性费用', costName: '水果费', discountAmount: '910', discountNumber: 48 },
+        { 'month': '六月', kindergarten: 'A园所', costType: '特色课程费用', costName: '足球课', discountAmount: '157', discountNumber: 45 },
+        { 'month': '六月', kindergarten: 'A园所', costType: '特色课程费用', costName: '篮球课', discountAmount: '157', discountNumber: 544 },
+        { 'month': '六月', kindergarten: 'A园所', costType: '特色课程费用', costName: '钢琴课', discountAmount: '107', discountNumber: 574 },
+        { 'month': '六月', kindergarten: 'A园所', costType: '特色课程费用', costName: '美术课', discountAmount: '57', discountNumber: 455 },
+    ];
+
+
+    /**
+     * 排序操作开始
+     */
+    let dt = list;
+    let sortColumn = ['month', 'kindergarten', 'costType']; //需要排序合并的列，排序顺序即数组字段先后顺序。
+
+    /*
+     *递归比较函数（用于比较多字段顺序）
+     *参数：
+     *	a、b 是list.sort()方法默认会传递进来的比较字段。
+     *	c: 需要排序的字段，默认从第一个sortColumn元素开始进行排序
+     *	i: 递归临界判断字段，默认为0
+     */
+    let compare = function (a, b, c = sortColumn[0], i = 0) {
+        if (a[c] == b[c]){ //等于的话进行判断是否还有后续字段需要排序，没有则返回0；有则递归进行后续字段排序处理。
+            if(i == (sortColumn.length-1)){//没有后续字段
+                i = 0;
+                return 0;
+            }
+            i+=1;
+            return compare(a, b, sortColumn[i], i);//递归排序后续字段
+        } else if (a[c] > b[c]) { //大于返回1
+            return 1;
+        } else { //小于返回-1
+            return -1;
+        }
+    };
+    dt.sort(compare); //对数据进行排序
+
+    /**
+     * 排序操作结束
+     */
+
+    /**
+     * 合并操作开始
+     */
+    let mergeColumns = []; //存放合并行内容的数组
+    for(let i=0; i<sortColumn.length; i++){
+        mergeColumns.push({
+            rspan:1, //合并的行数
+            colStr:'', //合并行的内容
+            colName:sortColumn[i] //行key
+        });
+    }
+
+    /*
+     * 列合并函数（递归实现,这里只处理了需要合并排序的列）
+     * 参数：
+     *	curItem: 当前条数据
+     *	preItem：前一条数据
+     *	curIndex: 用于定义当前执行到第几个合并字段
+     */
+    let dataMerge = function(curItem, preItem, curIndex = 0){
+        if (curItem[mergeColumns[curIndex].colName] == preItem[mergeColumns[curIndex].colName]) {//值相同说明该字段这两行数据内容相同，可以合并，所以rspan加1
+            mergeColumns[curIndex].colStr = '';
+            mergeColumns[curIndex].rspan += 1;
+            if(curIndex == (mergeColumns.length-1)){//做一个限制，否则会无线递归下去
+                return;
+            }
+            curIndex += 1;
+            dataMerge(curItem, preItem, curIndex);//递归调用
+        } else { //值不同，则需要进行列td输出。
+            for(let j=curIndex; j<sortColumn.length; j++){//从curIndex进行内容处理，防止遗漏或过多处理
+                mergeColumns[j].colStr = ('<td  rowspan="' + mergeColumns[j].rspan + '">' + curItem[mergeColumns[j].colName] + '</td>');
+                mergeColumns[j].rspan = 1;
+            }
+            curIndex = 0;
+        }
+    }
+
+    /*
+     * 倒序循环，一次取当前条和下一条，进行比较，
+     * 根据比较结果累加合并的行数或重置合并的行数，生成的标签依次往前累加
+     * 为什么要倒叙处理呢？因为td的rowspan属性是在第一条编写的哦
+     */
+    let ht = ''; //输出的行内容（数据都是倒叙拼接）
+    for (let i = dt.length - 1; i > 0; i--) {
+        let curItem = dt[i], preItem = dt[i - 1]; //获取当前条和前一条
+        dataMerge(curItem, preItem, 0);//合并数据
+        ht = '<tr>' + mergeColumns[0].colStr + mergeColumns[1].colStr + mergeColumns[2].colStr + '<td>' + curItem.costName + '</td>' + '<td>' + curItem.discountAmount + '</td>' + '<td>' + curItem.discountNumber + '</td>' + '</tr>' + ht;
+    }
+
+    let firstItem = dt[0];// 由于循环没有到第一条，所以必须单独补上第一条
+    ht = '<tr><td name="col_1" rowspan="' + mergeColumns[0].rspan + '">' + firstItem.month + '</td><td name="col_2" rowspan="' + mergeColumns[1].rspan + '">' + firstItem.kindergarten + '</td><td name="col_1" rowspan="' + mergeColumns[2].rspan + '">' + firstItem.costType + '</td>'
+        + '<td>' + firstItem.costName + '</td><td>' + firstItem.discountAmount + '</td><td>' + firstItem.discountNumber + '</td></tr>' + ht;
+
+    //表头处理
+    ht = '<thead><tr><th>月份</th><th>园所</th><th>费用类型</th><th>费用名称</th><th>优惠金额</th><th>优惠数量</th></tr></thead><tbody>' + ht + '</tbody>';
+
+    var tbl = document.getElementById('testTable');
+    tbl.innerHTML = ht;
+
+    /**
+     * 合并操作结束
+     */
+    <!--<Row :gutter="32">-->
+    <!--<Col span="6" class="padding-30">-->
+    <!--<FormItem label="国籍:" class="ml55">-->
+    <!--<Select v-model="formData.user_nationality" class="w108" filterable>-->
+    <!--<Option v-for="item in countryType" :value="item.cn">{{ item.cn }}</Option>-->
+    <!--</Select>-->
+    <!--</FormItem>-->
+    <!--</Col>-->
+    <!--<Col span="7" class="padding-30">-->
+    <!--<FormItem label="港澳台侨外:" class="ml85">-->
+    <!--<Select v-model="formData.user_isHongkong" class="w148" filterable>-->
+    <!--<Option v-for="item in modelOverseasLists" :value="item.value">{{ item.value }}</Option>-->
+    <!--</Select>-->
+    <!--</FormItem>-->
+    <!--</Col>-->
+    <!--<Col span="6" class="padding-30">-->
+    <!--<FormItem label="籍贯:" class="ml55">-->
+    <!--<Input class="w108" v-model="formData.user_nativePlace" placeholder="请输入籍贯" />-->
+    <!--</FormItem>-->
+    <!--</Col>-->
+    <!--</Row>-->
+    <!--<Row :gutter="32">-->
+    <!--<Col span="7" class="padding-30">-->
+    <!--<FormItem label="户口性质:" class="ml85">-->
+    <!--<Select v-model="formData.user_householdNature" class="w148" filterable>-->
+    <!--<Option :value="item.value" v-for="item in householdNature">{{item.value}}</Option>-->
+    <!--</Select>-->
+    <!--</FormItem>-->
+    <!--</Col>-->
+    <!--<Col span="17" class="padding-30">-->
+    <!--<FormItem label="现住址:" class="ml85">-->
+    <!--<Input class="w274" v-model="formData.user_address" placeholder="请输入现住址" />-->
+    <!--</FormItem>-->
+    <!--</Col>-->
+    <!--</Row>-->
+    <!--<Row :gutter="32">-->
+    <!--<Col span="6" class="padding-30">-->
+    <!--<FormItem label="就读方式:" class="ml85">-->
+    <!--<Select v-model="formData.user_wayOfStudying" class="w108" filterable>-->
+    <!--<Option :value="item.value" v-for="item in wayOfStudying">{{item.value}}</Option>-->
+    <!--</Select>-->
+    <!--</FormItem>-->
+    <!--</Col>-->
+    <!--<Col span="7" class="padding-30">-->
+    <!--<FormItem label="是否是独生子女:" class="ml130">-->
+    <!--<Select v-model="formData.user_isOneChild" class="w108" filterable>-->
+    <!--<Option :value="item.value" v-for="item in isOneChild">{{item.value}} {{item.index}}</Option>-->
+    <!--</Select>-->
+    <!--</FormItem>-->
+    <!--</Col>-->
+    <!--<Col span="6" class="padding-30">-->
+    <!--<FormItem label="是否是进城务工子女:" class="ml130">-->
+    <!--<Select v-model="formData.user_isWorkForChildren" class="w108" filterable>-->
+    <!--<Option :value="item.value" v-for="item in isWorkForChildren">{{item.value}}</Option>-->
+    <!--</Select>-->
+    <!--</FormItem>-->
+    <!--</Col>-->
+    <!--</Row>-->
+    <!--<Row :gutter="32">-->
+    <!--<Col span="6" class="padding-30">-->
+    <!--<FormItem label="健康状况:" class="ml85">-->
+    <!--<Select v-model="formData.user_healthStatus" class="w108" filterable>-->
+    <!--<Option :value="item.value" v-for="item in healthStatus">{{item.value}}</Option>-->
+    <!--</Select>-->
+    <!--</FormItem>-->
+    <!--</Col>-->
+    <!--<Col span="6" class="padding-30">-->
+    <!--<FormItem label="是否残疾:" class="ml85">-->
+    <!--<Select v-model="formData.user_Disability" class="w108" filterable>-->
+    <!--<Option :value="item.value" v-for="item in Disability">{{item.value}}</Option>-->
+    <!--</Select>-->
+    <!--</FormItem>-->
+    <!--</Col>-->
+    <!--<Col span="6" class="padding-30">-->
+    <!--<FormItem label="残疾类型:" class="ml85">-->
+    <!--<Select v-model="formData.user_disablilitypr" class="w108" filterable>-->
+    <!--<Option :value="item.value" v-for="item in disablilitypr">{{item.value}}</Option>-->
+    <!--</Select>-->
+    <!--</FormItem>-->
+    <!--</Col>-->
+    <!--</Row>-->
+
+
+
+
+    api.gradeListGet(function (res) {
+        vm.grateListss = res.result;
+        let list = [];
+        for (let i = 0; i < res.result.length; i++) {
+            let obj = {};
+            obj.checkGrateAll = false;
+            obj.checkGrateAllGroup = [];
+            obj.gradeInfo = res.result[i].gradeInfo;
+            obj.classInfoList = res.result[i].classInfoList;
+            list.push(obj);
+
+            for (let n = 0; n < res.result[i].classInfoList.length; n++) {
+                console.log(res.result[i].classInfoList);
+                if (res.result[i].classInfoList.length !== []) {
+                    let mainClassTeacher = '';
+                    let viceClassTeacher = '';
+                    let baoFaculty = '';
+                    console.log(res.result[i].classInfoList[n].dryNurseName);
+                    if (res.result[i].classInfoList[n].dryNurseName !== null) {
+                        console.log(res.result[i].classInfoList[n].dryNurseName);
+                        for (let j = 0; j < res.result[i].classInfoList[n].dryNurseName.length; j++) {
+                            mainClassTeacher += res.result[i].classInfoList[n].dryNurseName[j].name + ',';
+                        }
+                        mainClassTeacher = mainClassTeacher.substr(0, mainClassTeacher.length - 1);
+                    }
+                    if (res.result[i].classInfoList[n].classMinorTeacherName !== null) {
+                        for (let m = 0; m < res.result[i].classInfoList[n].classMinorTeacherName.length; m++) {
+                            viceClassTeacher += res.result[i].classInfoList[n].classMinorTeacherName[m].name + ',';
+                        }
+                        viceClassTeacher = viceClassTeacher.substr(0, viceClassTeacher.length - 1);
+                    }
+                    if ( res.result[i].classInfoList[n].classTeacherName !== null) {
+                        for (let m = 0; m < res.result[i].classInfoList[n].classTeacherName.length; m++) {
+                            baoFaculty += res.result[i].classInfoList[n].classTeacherName[m].name + ',';
+                        }
+                        baoFaculty = baoFaculty.substr(0, baoFaculty.length - 1);
+                    }
+                    list[i].classInfoList[n].mainClassTeacher = mainClassTeacher;
+                    list[i].classInfoList[n].viceClassTeacher = viceClassTeacher;
+                    list[i].classInfoList[n].baoFaculty = baoFaculty;
+                }
+            }
+
+            if (i === 0) {
+                let classStr1 = {
+                    gradeIndex: 0,
+                    gradeName: '——',
+                    gradeId: 0
+                };
+                vm.classLists.push(classStr1);
+            }
+            let classStr = {
+                gradeIndex: i + 1,
+                gradeName: list[i].gradeInfo.name,
+                gradeId: list[i].gradeInfo.id
+            };
+            if (i === res.result.length - 1) {
+                let classStr2 = {
+                    gradeIndex: i + 1,
+                    gradeName: '学前班',
+                    gradeId: 5
+                };
+                vm.classLists2.push(classStr2);
+                break;
+            }
+            vm.classLists.push(classStr);// 循环出新建年级的年级（除学前班）列表
+            vm.classLists2.push(classStr);
+        }
+        // for (let i = 0; i < vm.grateListss.length; i++) {
+        //     vm.grateListss[i].checkGrateAll = false;
+        //     vm.grateListss[i].checkGrateAllGroup = [];
+        //     for (let n = 0; n < vm.grateListss[i].classInfoList.length; n++) {
+        //         let mainClassTeacher, viceClassTeacher, baoFaculty;
+        //         mainClassTeacher = vm.grateListss[i].classInfoList[n].dryNurseName.join(',');
+        //         vm.grateListss[i].classInfoList[n].mainClassTeacher = mainClassTeacher;
+        //         viceClassTeacher = vm.grateListss[i].classInfoList[n].classMinorTeacherName.join(',');
+        //         vm.grateListss[i].classInfoList[n].viceClassTeacher = viceClassTeacher;
+        //         baoFaculty = vm.grateListss[i].classInfoList[n].classTeacherName.join(',');
+        //         vm.grateListss[i].classInfoList[n].baoFaculty = baoFaculty;
+        //     }
+        //     if (i === 0) {
+        //         let classStr1 = {
+        //             gradeIndex: 0,
+        //             gradeName: '——',
+        //             gradeId: 0
+        //         };
+        //         vm.classLists.push(classStr1);
+        //     }
+        //     let classStr = {
+        //         gradeIndex: i + 1,
+        //         gradeName: vm.grateListss[i].gradeInfo.name,
+        //         gradeId: vm.grateListss[i].gradeInfo.id
+        //     };
+        //     if (i === vm.grateListss.length - 1) {
+        //         let classStr2 = {
+        //             gradeIndex: i + 1,
+        //             gradeName: '——',
+        //             gradeId: 5
+        //         };
+        //         vm.classLists2.push(classStr2);
+        //         break;
+        //     }
+        //     vm.classLists.push(classStr);// 循环出新建年级的年级（除学前班）列表
+        //     vm.classLists2.push(classStr);
+        // }
+        vm.grateLists = list; console.log(111, list);
+    });
+
+    orderColumns: [
+        {
+            type: 'selection',
+            width: 60,
+            align: 'center',
+            fixed: 'left'
+        },
+        {
+            title: '姓名',
+            key: 'user_name',
+            align: 'center',
+            width: 160,
+            className: 'name_color'
+        },
+        {
+            title: '性别',
+            key: 'user_sex',
+            align: 'center',
+            width: 160
+        },
+        {
+            title: '年龄',
+            key: 'user_age',
+            align: 'center',
+            width: 160
+        },
+        {
+            title: '血型',
+            key: 'user_bloodType',
+            align: 'center',
+            width: 160
+        },
+        {
+            title: '出生日期',
+            key: 'user_dateOfBirth',
+            align: 'center',
+            width: 160
+        },
+        {
+            title: '身份证号',
+            key: 'user_idNumber',
+            align: 'center',
+            width: 260
+        },
+        {
+            title: '是否特殊体质',
+            key: 'user_isPokeBody',
+            align: 'center',
+            width: 260
+        },
+        {
+            title: '详情',
+            key: 'user_pokeBodyDescribe',
+            align: 'center',
+            width: 260
+        },
+        {
+            title: '是否食物过敏',
+            key: 'user_isFoodAllergy',
+            align: 'center',
+            width: 260
+        },
+        {
+            title: '详情',
+            key: 'user_foodAllergyDescribe',
+            align: 'center',
+            width: 260
+        },
+        {
+            title: '备注',
+            key: 'user_remarks',
+            align: 'center',
+            width: 260
+        },
+        {
+            title: '监护人姓名',
+            key: 'guardian_name',
+            align: 'center',
+            width: 160
+        },
+        {
+            title: '关系',
+            key: 'guardian_relation',
+            align: 'center',
+            width: 160
+        },
+        {
+            title: '联系方式',
+            key: 'guardian_phone',
+            align: 'center',
+            width: 160
+        },
+        {
+            title: '身份证号',
+            key: 'guardian_certificatesNumber',
+            align: 'center',
+            width: 260
+        },
+        {
+            title: '学历',
+            key: 'guardian_education',
+            align: 'center',
+            width: 160
+        },
+        {
+            title: '工作单位',
+            key: 'guardian_wordAddress',
+            align: 'center',
+            width: 160
+        },
+        {
+            title: '职务',
+            key: 'guardian_job',
+            align: 'center',
+            width: 160
+        },
+        {
+            title: '个人特长',
+            key: 'guardian_speciality',
+            align: 'center',
+            width: 160
+        },
+        {
+            title: '家庭详细地址',
+            key: 'guardian_familyAddress',
+            align: 'center',
+            width: 160
+        },
+        {
+            title: '户籍详细地址',
+            key: 'guardian_householdResgister',
+            align: 'center',
+            width: 160
+        },
+        {
+            title: '接送人姓名',
+            key: 'guardian_surrogate',
+            align: 'center',
+            width: 160
+        },
+        {
+            title: '联系方式',
+            key: 'guardian_surrogatePhone',
+            align: 'center',
+            width: 160
+        },
+        {
+            title: '是否上过早教',
+            key: 'guardian_isEarlyEducation',
+            align: 'center',
+            width: 160
+        },
+        {
+            title: '入园前谁带孩子',
+            key: 'guardian_beforeEnteringBringChildren',
+            align: 'center',
+            width: 160
+        },
+        {
+            title: '操作',
+            key: 'show_more',
+            align: 'center',
+            fixed: 'right',
+            width: 160,
+            render: (h, params) => {
+                return h('Button', {
+                    props: {
+                        type: 'text',
+                        size: 'small'
+                    },
+                    on: {
+                        click: () => {
+                            this.modal5 = true;
+                            this.formData = params.row;
+                            console.log(params);
+                        }
+                    }
+                }, '编辑');
+            }
+        }
+    ], // 表格表头
+
+        str.user_name = res.result[i].childInfo.name;
+    str.user_id = res.result[i].childInfo.id;
+    str.user_sex = res.result[i].childInfo.sex;
+    str.user_age = res.result[i].childInfo.age;
+    str.user_bloodType = res.result[i].childInfo.bloodType;
+    let data = new Date(res.result[i].childInfo.dateOfBirth * 1000);
+    str.user_dateOfBirth = data.getFullYear() + '-' + (data.getMonth() + 1 < 10 ? '0' + (data.getMonth() + 1) : data.getMonth() + 1) + '-' + data.getDate();
+    str.user_idNumber = res.result[i].childInfo.idNumber;
+    if (res.result[i].childInfo.isPokeBody === 0) {
+        str.user_isPokeBody = '否';
+    } else {
+        str.user_isPokeBody = '是';
+    }
+    str.user_pokeBodyDescribe = res.result[i].childInfo.pokeBodyDescribe;
+    if (res.result[i].childInfo.isFoodAllergy === 0) {
+        str.user_isFoodAllergy = '否';
+    } else {
+        str.user_isFoodAllergy = '是';
+    }
+    str.user_foodAllergyDescribe = res.result[i].childInfo.user_foodAllergyDescribe;
+    str.user_remarks = res.result[i].childInfo.user_remarks;
+    str.guardian_name = res.result[i].guardianInfo.name;
+    str.guardian_id = res.result[i].guardianInfo.id;
+    str.guardian_relation = res.result[i].guardianInfo.relation;
+    str.guardian_phone = res.result[i].guardianInfo.phone;
+    str.guardian_certificatesNumber = res.result[i].guardianInfo.certificatesNumber;
+    str.guardian_education = res.result[i].guardianInfo.education;
+    str.guardian_wordAddress = res.result[i].guardianInfo.wordAddress;
+    str.guardian_job = res.result[i].guardianInfo.job;
+    str.guardian_speciality = res.result[i].guardianInfo.speciality;
+    str.guardian_familyAddressArr = [];
+    str.guardian_familyAddressArr = res.result[i].guardianInfo.familyAddressProvince + ',' + res.result[i].guardianInfo.familyAddressCity;
+    str.guardian_familyAddressDescribe = res.result[i].guardianInfo.familyAddressDescribe;
+    str.guardian_householdResgisterArr = [];
+    str.guardian_householdResgisterArr = res.result[i].guardianInfo.householdRegisterProvince + ',' + res.result[i].guardianInfo.householdRegisterCity;
+    str.guardian_householdRegisterDescribe = res.result[i].guardianInfo.householdRegisterDescribe;
+    str.guardian_surrogate = res.result[i].guardianInfo.surrogate;
+    str.guardian_surrogatePhone = res.result[i].guardianInfo.surrogatePhone;
+    if (res.result[i].guardianInfo.isEarlyEducation === 0) {
+        str.guardian_isEarlyEducation = '否';
+    } else {
+        str.guardian_isEarlyEducation = '是';
+    }
+    str.guardian_beforeEnteringBringChildren = res.result[i].guardianInfo.beforeEnteringBringChildren;
+</script>
